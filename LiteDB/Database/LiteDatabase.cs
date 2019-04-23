@@ -190,6 +190,16 @@ namespace LiteDB
         }
 
         /// <summary>
+        /// Drop a collection forced and all data + indexes
+        /// </summary>
+        public bool DropCollectionForced(string name)
+        {
+            if (name.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(name));
+
+            return _engine.Value.DropCollectionForced(name);
+        }
+
+        /// <summary>
         /// Rename a collection. Returns false if oldName does not exists or newName already exists
         /// </summary>
         public bool RenameCollection(string oldName, string newName)

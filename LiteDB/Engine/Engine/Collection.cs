@@ -39,6 +39,25 @@ namespace LiteDB
         }
 
         /// <summary>
+        /// Drop collection forced including all documents, indexes and extended pages
+        /// </summary>
+        public bool DropCollectionForced(string collection)
+        {
+            if (collection.IsNullOrWhiteSpace()) throw new ArgumentNullException(nameof(collection));
+
+            return this.Transaction<bool>(collection, false, (col) =>
+            {
+                if (col == null) return false;
+
+                _log.Write(Logger.COMMAND, "drop collection forced {0}", collection);
+
+                _collections.DropForced(col);
+
+                return true;
+            });
+        }
+
+        /// <summary>
         /// Rename a collection
         /// </summary>
         public bool RenameCollection(string collection, string newName)

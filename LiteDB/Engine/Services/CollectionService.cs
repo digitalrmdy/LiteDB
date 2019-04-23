@@ -155,5 +155,70 @@ namespace LiteDB
 
             _pager.DeletePage(col.PageID);
         }
+
+        /// <summary>
+        /// Drop a collection, ignoring exceptions on pages inside this collection
+        /// </summary>
+        /// <param name="collectionPage"></param>
+        public void DropForced(CollectionPage collectionPage)
+        {
+            var pagesToDrop = new HashSet<uint>();
+
+            IEnumerable<CollectionIndex> indexes = new CollectionIndex[0];
+            try
+            {
+                indexes = collectionPage.GetIndexes(true);
+            }
+            catch (InvalidCastException)
+            {
+                // exceptions are ignored
+            }
+
+            foreach (var collectionIndex in indexes)
+            {
+                IEnumerable<IndexNode> indexNodes = new IndexNode[0];
+                try
+                {
+                    indexNodes = _indexer.FindAll(collectionIndex, Query.Ascending);
+                }
+                catch (InvalidCastException)
+                {
+                    // exceptions are ignored
+                }
+
+                foreach (var node in indexNodes)
+                {
+                    if (collectionIndex.Slot == 0)
+                    {
+                        pagesToDrop.Add(node.DataBlock.PageID);
+
+                        var block = _data.GetBlock(node.DataBlock);
+
+                        if (block.ExtendPageID != uint.MaxValue)
+                        {
+                            _pager.DeletePage(block.ExtendPageID, true);
+                            _trans.CheckPoint();
+                        }
+                    }
+
+                    pagesToDrop.Add(node.Position.PageID);
+                }
+
+                pagesToDrop.Add(collectionIndex.HeadNode.PageID);
+                pagesToDrop.Add(collectionIndex.TailNode.PageID);
+            }
+
+            pagesToDrop.Add(collectionPage.PageID);
+
+            foreach (var pageToDrop in pagesToDrop)
+            {
+                _pager.DeletePage(pageToDrop);
+                _trans.CheckPoint();
+            }
+
+            var header = _pager.GetPage<HeaderPage>(0);
+            header.CollectionPages.Remove(collectionPage.CollectionName);
+            _pager.SetDirty(header);
+        }
     }
 }
