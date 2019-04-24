@@ -169,7 +169,7 @@ namespace LiteDB
             {
                 indexes = collectionPage.GetIndexes(true);
             }
-            catch (InvalidCastException)
+            catch
             {
                 // exceptions are ignored
             }
@@ -181,7 +181,7 @@ namespace LiteDB
                 {
                     indexNodes = _indexer.FindAll(collectionIndex, Query.Ascending);
                 }
-                catch (InvalidCastException)
+                catch
                 {
                     // exceptions are ignored
                 }
