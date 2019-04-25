@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LiteDB
 {
@@ -343,6 +344,11 @@ namespace LiteDB
         public IEnumerable<IndexNode> FindAll(CollectionIndex index, int order)
         {
             var cur = this.GetNode(order == Query.Ascending ? index.HeadNode : index.TailNode);
+
+            if (cur == null)
+            {
+                yield break;
+            }
 
             while (!cur.NextPrev(0, order).IsEmpty)
             {
